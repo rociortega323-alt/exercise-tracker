@@ -14,13 +14,12 @@ app.use(express.static('public'));
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
-// connect DB
+// ----------------- CONNECT TO DB -----------------
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB conectado correctamente"))
   .catch(err => console.error("Error conectando a MongoDB:", err));
 
-
-// ---------------- ROUTES ----------------
+// ----------------- ROUTES -----------------
 
 // CREATE USER
 app.post('/api/users', async (req, res) => {
@@ -35,8 +34,12 @@ app.post('/api/users', async (req, res) => {
 
 // GET ALL USERS
 app.get('/api/users', async (req, res) => {
-  const users = await User.find({}, 'username _id').exec();
-  res.json(users);
+  try {
+    const users = await User.find({}, 'username _id').exec();
+    res.json(users);
+  } catch (err) {
+    res.json({ error: err.message });
+  }
 });
 
 // ADD EXERCISE
@@ -63,7 +66,6 @@ app.post('/api/users/:_id/exercises', async (req, res) => {
       date: exercise.date.toDateString(),
       _id: user._id
     });
-
   } catch (err) {
     res.json({ error: err.message });
   }
@@ -78,8 +80,12 @@ app.get('/api/users/:_id/logs', async (req, res) => {
 
     let filter = { userId: user._id };
 
-    if (from) filter.date = { ...filter.date, $gte: new Date(from) };
-    if (to) filter.date = { ...filter.date, $lte: new Date(to) };
+    // Aplicar filtros de fecha si existen
+    if (from || to) {
+      filter.date = {};
+      if (from) filter.date.$gte = new Date(from);
+      if (to) filter.date.$lte = new Date(to);
+    }
 
     let query = Exercise.find(filter);
 
@@ -99,14 +105,13 @@ app.get('/api/users/:_id/logs', async (req, res) => {
       count: log.length,
       log: log
     });
-
   } catch (err) {
     res.json({ error: err.message });
   }
 });
 
 // ----------------------------------------
-
 const listener = app.listen(process.env.PORT || 3000, () => {
   console.log("Your app is listening on port " + listener.address().port);
 });
+
