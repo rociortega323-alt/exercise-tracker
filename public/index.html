@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Exercise Tracker</title>
+    <link rel="shortcut icon" href="https://cdn.freecodecamp.org/universal/favicons/favicon.ico" type="image/x-icon">
+  </head>
+  <body>
+    <h1>Exercise Tracker</h1>
+    <form id="user-form" method="post" action="/api/users">
+      <p><strong>Create a New User</strong></p>
+      <input type="text" name="username" placeholder="username">
+      <button type="submit">Submit</button>
+    </form>
+    <br><br>
+    <form id="exercise-form" method="post">
+      <p><strong>Add Exercises</strong></p>
+      <input id="userid" type="text" name=":_id" placeholder="userId*">
+      <input id="desc" type="text" name="description" placeholder="description*">
+      <input id="dur" type="number" name="duration" placeholder="duration* (mins)">
+      <input id="date" type="date" name="date" placeholder="date (optional)">
+      <button type="submit">Submit</button>
+    </form>
+    <script>
+      const form = document.getElementById("exercise-form");
+      form.onsubmit = (e) => {
+        e.preventDefault();
+        const userId = document.getElementById("userid").value;
+        form.action = "/api/users/" + userId + "/exercises";
+        form.submit();
+      }
+    </script>
+  </body>
+</html>
