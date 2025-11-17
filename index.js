@@ -75,36 +75,33 @@ app.post('/api/users/:_id/exercises', async (req, res) => {
 app.get('/api/users/:_id/logs', async (req, res) => {
   try {
     const { from, to, limit } = req.query;
-    const user = await User.findById(req.params._id).exec();
-    if (!user) return res.json({ error: 'user not found' });
+    const user = await User.findById(req.params._id);
+    if (!user) return res.json({ error: "user not found" });
 
-    let filter = { userId: user._id };
+    // Busca todos los ejercicios del usuario
+    let exercises = await Exercise.find({ userId: user._id });
 
-    // Aplicar filtros de fecha si existen
-    if (from || to) {
-      filter.date = {};
-      if (from) filter.date.$gte = new Date(from);
-      if (to) filter.date.$lte = new Date(to);
-    }
+    // Filtrar por fechas si existen
+    if (from) exercises = exercises.filter(e => e.date >= new Date(from));
+    if (to) exercises = exercises.filter(e => e.date <= new Date(to));
 
-    let query = Exercise.find(filter);
+    // Limitar resultados si existe limit
+    if (limit) exercises = exercises.slice(0, Number(limit));
 
-    if (limit) query = query.limit(Number(limit));
-
-    const exercises = await query.exec();
-
-    const log = exercises.map(ex => ({
-      description: ex.description,
-      duration: ex.duration,
-      date: ex.date.toDateString()
+    // Mapear al formato requerido por FCC
+    const log = exercises.map(e => ({
+      description: e.description,
+      duration: e.duration,
+      date: e.date.toDateString()
     }));
 
     res.json({
       username: user.username,
       _id: user._id,
       count: log.length,
-      log: log
+      log
     });
+
   } catch (err) {
     res.json({ error: err.message });
   }
@@ -114,4 +111,3 @@ app.get('/api/users/:_id/logs', async (req, res) => {
 const listener = app.listen(process.env.PORT || 3000, () => {
   console.log("Your app is listening on port " + listener.address().port);
 });
-
